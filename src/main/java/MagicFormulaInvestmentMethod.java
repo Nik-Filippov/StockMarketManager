@@ -31,16 +31,6 @@ public class MagicFormulaInvestmentMethod {
         System.out.println(sort(finalRanking));
     }
 
-    public MagicFormulaInvestmentMethod(ArrayList<Stock> stocks, int year, double minMarketCapInMill) throws IOException {
-        ArrayList<Stock> stocksUpdated = new ArrayList<>();
-        for(Stock stock : stocks){
-            if(stock.getMetric("marketCap", year) >= minMarketCapInMill * 1000000){
-                stocksUpdated.add(stock);
-            }
-        }
-        new MagicFormulaInvestmentMethod(stocksUpdated, year);
-    }
-
     public MagicFormulaInvestmentMethod(){
 
     }

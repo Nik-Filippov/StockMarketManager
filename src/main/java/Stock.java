@@ -1,8 +1,10 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import org.zeroturnaround.zip.ZipUtil;
+
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -32,14 +34,30 @@ public class Stock {
     }
 
     private ArrayList<String> getRawData() throws IOException {
-        URL url = generateURL();
         ArrayList<String> quotes = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), "UTF-8"))) {
-            for (String line; (line = reader.readLine()) != null;) {
-                quotes.add(line);
+
+        File dir = new File("cache/");
+        File[] matches = dir.listFiles((dir1, name) -> name.startsWith(symbol) && name.endsWith(".txt"));
+
+        if(matches.length == 0) {
+            URL url = generateURL();
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), "UTF-8"))) {
+                for (String line; (line = reader.readLine()) != null; ) {
+                    quotes.add(line);
+                }
             }
+            return quotes;
         }
-        return quotes;
+        else{
+            BufferedReader br = new BufferedReader(new java.io.FileReader(matches[0]));
+            String description;
+            while((description = br.readLine()) != null) {
+                quotes.add(description);
+            }
+            br.close();
+            return quotes;
+        }
     }
 
     public Double getMetric(String metricName, int year) throws IOException {
@@ -85,6 +103,28 @@ public class Stock {
             index++;
         }
         return metricHistory;
+    }
+
+    public void cache() throws IOException {
+        ArrayList<String> data = getRawData();
+        //Look for prev save file
+        File dir = new File("cache/");
+        File[] matches = dir.listFiles((dir1, name) -> name.startsWith(symbol) && name.endsWith(".txt"));
+        if(matches.length > 0){
+            System.out.println("Stock info is already cached.");
+        }
+        else {
+            String fileName = symbol + ".txt";
+            File myObj = new File("cache/" + fileName);
+            if (myObj.createNewFile()) {
+                FileWriter myWriter = new FileWriter("cache/" + fileName);
+                for (String stock : data) {
+                    myWriter.write(stock + "\n");
+                }
+                myWriter.close();
+            }
+            System.out.println("Stock info cached successfully.");
+        }
     }
 
     public String toString() {
