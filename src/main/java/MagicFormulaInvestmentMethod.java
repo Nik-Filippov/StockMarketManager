@@ -4,79 +4,51 @@ import java.util.stream.Collectors;
 
 public class MagicFormulaInvestmentMethod {
 
-    private ArrayList<Stock> stocks;
-    private int year;
+    private StockList stocks;
 
-    public MagicFormulaInvestmentMethod(ArrayList<Stock> stocks, int year) throws IOException {
+    public MagicFormulaInvestmentMethod(StockList stocks, int year) throws IOException {
         this.stocks = stocks;
-        this.year = year;
 
         HashMap<String, Double> finalRanking = new HashMap<>();
 
-        HashMap<String, Double> ebitdaToEvRanking = ebitdaToEvRanking();
+        HashMap<String, Double> enterpriseValueOverEBITDA = stocks.rank("enterpriseValueOverEBITDA", year, true);
         Double i = 0.0;
-        for(String str : ebitdaToEvRanking.keySet()){
+        for(String str : enterpriseValueOverEBITDA.keySet()){
             finalRanking.put(str, i);
             i++;
         }
         Double j = 0.0;
-        HashMap<String, Double> returnOnCapitalRanking = returnOnCapitalRanking();
-        for(String str : returnOnCapitalRanking.keySet()){
+        HashMap<String, Double> roic = stocks.rank("roic", year);
+        for(String str : roic.keySet()){
             finalRanking.put(str, finalRanking.get(str) + j);
             j++;
         }
 
-        System.out.println(ebitdaToEvRanking());
-        System.out.println(returnOnCapitalRanking());
-        System.out.println(sort(finalRanking));
+        System.out.println(enterpriseValueOverEBITDA);
+        System.out.println(roic);
+        System.out.println(StockList.sort(finalRanking));
     }
 
-    public MagicFormulaInvestmentMethod(){
-
-    }
-
-    public HashMap<String, Double> ebitdaToEvRanking() throws IOException {
-        HashMap<String, Double> ebitdaToEv = new HashMap<>();
-
-        for(Stock s : this.stocks){
-            ebitdaToEv.put(s.getSymbol(), 1 / s.getMetric("enterpriseValueOverEBITDA", year));
-        }
-
-        return sort(ebitdaToEv);
-    }
-
-    public HashMap<String, Double> returnOnCapitalRanking() throws IOException {
-        HashMap<String, Double> returnOnCapital = new HashMap<>();
-
-        for(Stock s : this.stocks){
-            returnOnCapital.put(s.getSymbol(), s.getMetric("roic", year));
-        }
-
-        return sort(returnOnCapital);
-    }
-
-    private HashMap<String, Double> sort(HashMap<String, Double> hashMap){
-        HashMap<String, Double> result = hashMap.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue(Comparator.naturalOrder()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-                        (oldValue, newValue) -> oldValue, LinkedHashMap::new));
-
-        return result;
-    }
-
-    public ArrayList<Stock> getStocks() {
-        return stocks;
-    }
-
-    public void setStocks(ArrayList<Stock> stocks) {
+    public MagicFormulaInvestmentMethod(StockList stocks, int yearBegin, int yearEnd) throws IOException {
         this.stocks = stocks;
-    }
 
-    public int getYear() {
-        return year;
-    }
+        HashMap<String, Double> finalRanking = new HashMap<>();
 
-    public void setYear(int year) {
-        this.year = year;
+        HashMap<String, Double> enterpriseValueOverEBITDA = stocks.rank("enterpriseValueOverEBITDA", yearBegin, yearEnd, true);
+        Double i = 0.0;
+        for(String str : enterpriseValueOverEBITDA.keySet()){
+            finalRanking.put(str, i);
+            i++;
+        }
+        Double j = 0.0;
+        HashMap<String, Double> roic = stocks.rank("roic", yearBegin, yearEnd);
+        for(String str : roic.keySet()){
+            finalRanking.put(str, finalRanking.get(str) + j);
+            j++;
+        }
+
+        System.out.println(enterpriseValueOverEBITDA);
+        System.out.println(roic);
+        System.out.println(stocks.sort(finalRanking));
     }
 }

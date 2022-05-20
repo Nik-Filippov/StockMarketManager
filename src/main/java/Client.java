@@ -4,13 +4,15 @@ import java.util.ArrayList;
 public class Client {
     public static void main(String[] args) throws IOException {
 
-        ArrayList<Stock> stocks = new ArrayList<>();
-        stocks.add(new Stock("F"));
-        stocks.add(new Stock("TSLA"));
-        stocks.add(new Stock("AAPL"));
-
-        MagicFormulaInvestmentMethod mf = new MagicFormulaInvestmentMethod(stocks, 2020);
-
-        stocks.get(2).cache();
+        StockList stocks = new StockList();
+        stocks.add(new Stock("SGML"));
+        stocks.add(new Stock("LTHM"));
+        stocks.add(new Stock("LAC"));
+        stocks.add(new Stock("ALB"));
+        stocks.add(new Stock("SLI"));
+        for(Stock s : stocks){
+            s.cache();
+        }
+        MagicFormulaInvestmentMethod mf = new MagicFormulaInvestmentMethod(stocks, 2019,2021);
     }
 }
