@@ -1,9 +1,16 @@
 import java.io.IOException;
-import java.util.ArrayList;
 
 public class Client {
-    public static void main(String[] args) throws IOException {
 
+
+    public static void main(String[] args) throws IOException {
+        run();
+    }
+
+    private static void run() throws IOException {
+        Window w =  new Window();
+        w.show();
+        /*
         StockList stocks = new StockList();
         stocks.add(new Stock("SGML"));
         stocks.add(new Stock("LTHM"));
@@ -14,5 +21,6 @@ public class Client {
             s.cache();
         }
         MagicFormulaInvestmentMethod mf = new MagicFormulaInvestmentMethod(stocks, 2019,2021);
+         */
     }
 }

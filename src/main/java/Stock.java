@@ -1,22 +1,17 @@
-import org.zeroturnaround.zip.ZipUtil;
-
 import java.io.*;
+import java.lang.reflect.Array;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Stock {
     private String symbol;
-
-    public Stock(String symbol) {
+    private ArrayList<String> data;
+    public Stock(String symbol) throws IOException {
         this.symbol = symbol;
-    }
-
-    public Stock() {
-
+        data = new ArrayList<>();
+        getRawData();
     }
 
     public String getSymbol() {
@@ -33,48 +28,46 @@ public class Stock {
         return new URL(strURL);
     }
 
-    private ArrayList<String> getRawData() throws IOException {
-        ArrayList<String> quotes = new ArrayList<>();
-
+    private void getRawData() throws IOException {
         File dir = new File("cache/");
         File[] matches = dir.listFiles((dir1, name) -> name.startsWith(symbol) && name.endsWith(".txt"));
 
         if(matches.length == 0) {
             URL url = generateURL();
-
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), "UTF-8"))) {
                 for (String line; (line = reader.readLine()) != null; ) {
-                    quotes.add(line);
+                    data.add(line);
                 }
             }
-            return quotes;
         }
         else{
             BufferedReader br = new BufferedReader(new java.io.FileReader(matches[0]));
             String description;
             while((description = br.readLine()) != null) {
-                quotes.add(description);
+                data.add(description);
             }
             br.close();
-            return quotes;
         }
     }
 
     public Double getMetric(String metricName, int year) throws IOException {
-        ArrayList<String> source = getRawData();
         String metric = "";
         int yearIndex = 0;
 
-        for(String str : source){
+        for(String str : data){
             if(str.contains("\"" + year)){
-                yearIndex = source.indexOf(str);
+                yearIndex = data.indexOf(str);
             }
+        }
+
+        if(yearIndex == 0){
+            return null;
         }
 
         ArrayList<String> fullYearMetrics = new ArrayList<>();
         int index = yearIndex;
-        while(!source.get(index).contains("}")){
-            fullYearMetrics.add(source.get(index));
+        while(!data.get(index).contains("}")){
+            fullYearMetrics.add(data.get(index));
             index++;
         }
 
@@ -86,45 +79,44 @@ public class Stock {
                 }
             }
         }
-        return Double.parseDouble(metric);
-    }
-
-    public HashMap<Integer, Double> getMetric(String metricName) throws IOException {
-        ArrayList<String> source = getRawData();
-        HashMap<Integer, Double> metricHistory = new HashMap<>();
-        int index = 0;
-        Integer currentYear = 0;
-        while(!source.get(index).contains("]")){
-            if(source.get(index).contains("date")) {
-                currentYear = Integer.parseInt(source.get(index).substring(
-                        source.get(index).indexOf(":") + 3, source.get(index).indexOf(":") + 7));
-                metricHistory.put(currentYear, getMetric(metricName, currentYear));
-            }
-            index++;
-        }
-        return metricHistory;
-    }
-
-    public void cache() throws IOException {
-        ArrayList<String> data = getRawData();
-        //Look for prev save file
-        File dir = new File("cache/");
-        File[] matches = dir.listFiles((dir1, name) -> name.startsWith(symbol) && name.endsWith(".txt"));
-        if(matches.length > 0){
-            System.out.println("Stock info is already cached.");
+        if(metric.contains("null")){
+            return null;
         }
         else {
-            String fileName = symbol + ".txt";
-            File myObj = new File("cache/" + fileName);
-            if (myObj.createNewFile()) {
-                FileWriter myWriter = new FileWriter("cache/" + fileName);
-                for (String stock : data) {
-                    myWriter.write(stock + "\n");
-                }
-                myWriter.close();
-            }
-            System.out.println("Stock info cached successfully.");
+            return Double.parseDouble(metric);
         }
+    }
+
+    public boolean cache() throws IOException {
+        try {
+            if(data.size() < 3){
+                System.out.println("No quote for such stock symbol.");
+                return false;
+            }
+            //Look for prev save file
+            File dir = new File("cache/");
+            File[] matches = dir.listFiles((dir1, name) -> name.startsWith(symbol) && name.endsWith(".txt"));
+            if (matches.length > 0) {
+                System.out.println("Stock info is already cached.");
+            } else {
+                String fileName = symbol + ".txt";
+                File myObj = new File("cache/" + fileName);
+                if (myObj.createNewFile()) {
+                    FileWriter myWriter = new FileWriter("cache/" + fileName);
+                    for (String stock : data) {
+                        myWriter.write(stock + "\n");
+                    }
+                    myWriter.close();
+                }
+                System.out.println("Stock info cached successfully.");
+                return true;
+            }
+        }
+        catch (Exception e){
+            System.out.println("Stock caching failed most likely due the exhaustion of free API calls.");
+            return false;
+        }
+        return false;
     }
 
     public String toString() {
